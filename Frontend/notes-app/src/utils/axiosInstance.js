@@ -1,4 +1,4 @@
-import axios from "axios" ;
+import axios from "axios";
 import { BASE_URL } from "./constants";
 
 const axiosInstance = axios.create({
@@ -18,8 +18,8 @@ axiosInstance.interceptors.request.use(
         return config;
     },
     (error) => {
-         return Promise.reject(error);
+        return Promise.reject(error);
     }
 );
 
-    export default axiosInstance;
+export default axiosInstance;

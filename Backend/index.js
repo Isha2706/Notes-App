@@ -1,6 +1,6 @@
 require("dotenv").config();
 
-const config = require("./Config.json");
+const config = require("./Config");
 const mongoose = require("mongoose");
 
 mongoose.connect(config.connectionString);
@@ -14,7 +14,7 @@ const cors = require("cors");
 const app = express();
 
 const jwt = require("jsonwebtoken");
-const {authenticateToken} = require("./utilities");
+const { authenticateToken } = require("./utilities");
 // const userModel = require("./models/user-model");
 
 app.use(express.json());
@@ -25,36 +25,36 @@ app.use(
     })
 );
 
-app.get("/", (req,res) => {
-    res.json({ data: "hello "});
+app.get("/", (req, res) => {
+    res.json({ data: "hello " });
 });
 
 // Create Account
-app.post("/create-account", async (req,res) => {
+app.post("/create-account", async (req, res) => {
 
-    const {fullName,email,password } = req.body;
+    const { fullName, email, password } = req.body;
 
-    if(!fullName) {
-        return res 
+    if (!fullName) {
+        return res
             .status(400)
-            .json({ error: true, message:"Full Name is Required" });
+            .json({ error: true, message: "Full Name is Required" });
     }
 
     if (!email) {
-        return res 
-           .status(400)
-           .json({ error: true, message:"Email is Required" });
-    }
-    
-    if (!password) {
-        return res 
-           .status(400)
-           .json({ error: true, message:"Password is Required" });
+        return res
+            .status(400)
+            .json({ error: true, message: "Email is Required" });
     }
 
-    const isUser = await User.findOne({email:email});
-    if(isUser) {
-        return res.json({ error: true, message:"Email already exists" });
+    if (!password) {
+        return res
+            .status(400)
+            .json({ error: true, message: "Password is Required" });
+    }
+
+    const isUser = await User.findOne({ email: email });
+    if (isUser) {
+        return res.json({ error: true, message: "Email already exists" });
     }
 
     const user = new User({
@@ -65,7 +65,7 @@ app.post("/create-account", async (req,res) => {
 
     await user.save();
 
-    const  accessToken = jwt.sign({user},process.env.ACCESS_TOKEN_SECRET , {
+    const accessToken = jwt.sign({ user }, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: "36000m",
     });
 
@@ -78,37 +78,37 @@ app.post("/create-account", async (req,res) => {
 
 });
 
-app.post("/login" ,async (req,res) => {
+app.post("/login", async (req, res) => {
     const { email, password } = req.body;
 
     if (!email) {
         return res.status(400).json({ message: "Email is required" });
     }
-    
+
     if (!password) {
         return res.status(400).json({ message: "Password is required" });
     }
 
-    const userInfo = await User.findOne({ email:email});
+    const userInfo = await User.findOne({ email: email });
 
     if (!userInfo) {
         return res.status(401).json({ message: "User not found" });
     }
 
     if (userInfo.email == email && userInfo.password == password) {
-        const user = {user:userInfo};
+        const user = { user: userInfo };
         const accessToken = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
             expiresIn: "36000m",
         });
 
         return res.json({
-            error:false,
-            message:"login Successfull",
+            error: false,
+            message: "login Successfull",
             email,
             accessToken,
-    });
+        });
     } else {
-        return res.status(400).json({ error:true, message: "Invalid Credentials", });
+        return res.status(400).json({ error: true, message: "Invalid Credentials", });
     }
 
 
@@ -121,7 +121,7 @@ app.post("/add-note", authenticateToken, async (req, res) => {
     // console.log("Authorization header:", req.headers['authorization']);
     // console.log("User from token:", req.user);/
 
-    const {title, content, tags} = req.body;
+    const { title, content, tags } = req.body;
     const { user } = req.user;
 
     // console.log("Request body:", req.body);
@@ -131,7 +131,7 @@ app.post("/add-note", authenticateToken, async (req, res) => {
     if (!title) {
         return res.status(400).json({ error: true, message: "Title is required" });
     }
-    
+
     if (!content) {
         return res.status(400).json({ error: true, message: "Content is required" });
     }
@@ -155,11 +155,11 @@ app.post("/add-note", authenticateToken, async (req, res) => {
 
 // Edit Notes
 app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
-    const  noteId  = req.params.noteId;
-    const { title, content, tags, isPinned  } = req.body;
+    const noteId = req.params.noteId;
+    const { title, content, tags, isPinned } = req.body;
     const { user } = req.user;
 
-    if(!title && !content && !tags) {
+    if (!title && !content && !tags) {
         return res.status(400).json({ error: true, message: "No changes provided" });
     }
 
@@ -192,8 +192,8 @@ app.put("/edit-note/:noteId", authenticateToken, async (req, res) => {
 app.get("/get-all-notes/", authenticateToken, async (req, res) => {
     const { user } = req.user;
 
-    try{
-        const notes = await Note.find({ userId: user._id }).sort({isPinned: -1});
+    try {
+        const notes = await Note.find({ userId: user._id }).sort({ isPinned: -1 });
 
         return res.json({ error: false, notes, message: "All notes retrived successfully" });
     } catch (error) {
@@ -204,15 +204,15 @@ app.get("/get-all-notes/", authenticateToken, async (req, res) => {
 
 // Delete Notes
 app.delete("/delete-note/:noteId", authenticateToken, async (req, res) => {
-    const  noteId  = req.params.noteId;
+    const noteId = req.params.noteId;
     const { user } = req.user;
 
-    try{
+    try {
         const note = await Note.findOne({
             _id: noteId,
             userId: user._id,
         });
-        
+
         if (!note) {
             return res.status(404).json({ error: true, message: "Note not found" });
         }
@@ -224,7 +224,7 @@ app.delete("/delete-note/:noteId", authenticateToken, async (req, res) => {
             message: "Note deleted successfully",
         })
 
-    }catch{
+    } catch {
         return res.status(500).json({
             error: true,
             message: "Internal Server Error",
@@ -238,54 +238,85 @@ app.put("/update-note-pinned/:noteId", authenticateToken, async (req, res) => {
     const noteId = req.params.noteId;
     const { isPinned } = req.body;
     const { user } = req.user;
-  
-    try {
-      const note = await Note.findOne({
-        _id: noteId,
-        userId: user._id,
-      });
-  
-      if (!note) {
-        return res.status(404).json({ error: true, message: "Note not found" });
-      }
-  
-      note.isPinned = isPinned;
-  
-      await note.save();
-  
-      return res.json({
-        error: false,
-        note,
-        message: "Note updated successfully",
-      });
-    } catch (error) {
-      return res.status(500).json({ 
-          error: true, 
-          message: "Internal Server Error" 
-      });
-    }
-  });
 
-  // Get User
+    try {
+        const note = await Note.findOne({
+            _id: noteId,
+            userId: user._id,
+        });
+
+        if (!note) {
+            return res.status(404).json({ error: true, message: "Note not found" });
+        }
+
+        note.isPinned = isPinned;
+
+        await note.save();
+
+        return res.json({
+            error: false,
+            note,
+            message: "Note updated successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error"
+        });
+    }
+});
+
+// Get User
 app.get("/get-user", authenticateToken, async (req, res) => {
     const { user } = req.user;
     const isUser = await User.findOne({ _id: user._id });
-  
+
     if (!isUser) {
-      return res.status(401);
+        return res.status(401);
     }
     return res.json({
-    //   user: user,
-      user: {
-        fullName: isUser.fullName,
-        email: isUser.email,
-        _id: isUser._id,
-        createdOn: isUser.createdOn,
-      },
-      message: "User found",
+        //   user: user,
+        user: {
+            fullName: isUser.fullName,
+            email: isUser.email,
+            _id: isUser._id,
+            createdOn: isUser.createdOn,
+        },
+        message: "User found",
     });
-  });
+});
 
-app.listen(1000);
+// Search Notes
+app.get("/search-notes/", authenticateToken, async (req, res) => {
+    const { user } = req.user;
+    const { query } = req.query;
+
+    if (!query) {
+        return res.status(400).json({error: true, message: "search query is required"});
+    }
+
+    try {
+        const matchingNotes = await Note.find({
+            userId: user._id,
+            $or: [
+                {title: { $regex: new RegExp(query, "i")} },
+                {content: { $regex: new RegExp(query, "i")} },
+            ]
+        });
+
+        return res.json({
+            error: false,
+            notes: matchingNotes,
+            message: "Notes matching the search query retrived successfully"
+        });
+
+    } catch (error) {
+        return res.status(500).json({error: true, message: "Internal Server Error"});
+    }
+});
+
+app.listen(1000, () => {
+    console.log("Server Started...");
+});
 
 module.exports = app;
